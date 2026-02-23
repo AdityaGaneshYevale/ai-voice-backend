@@ -1,3 +1,6 @@
 fastapi
 uvicorn
 firebase-admin
+requests
+feedparser
+pydantic
