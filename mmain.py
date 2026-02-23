@@ -108,120 +108,64 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#  IMPORTS
 from fastapi import FastAPI
 from pydantic import BaseModel
 import datetime
 import requests
 import re
 import feedparser
-import firebase_admin
-from firebase_admin import credentials, firestore
-#CONFIG
+
 OPEN_WEATHER_API_KEY = "c490ae765bd4f1bb67c96f114004f886"
+
 app = FastAPI(title="Voice Assistant Backend")
-# 🔥 Firebase Init
-cred = credentials.Certificate("firebase_key.json")
-firebase_admin.initialize_app(cred)
-db = firestore.client()
-#MODELS
+
 class CommandRequest(BaseModel):
     text: str
     userId: str | None = "guest"
+
 class CommandResponse(BaseModel):
     reply: str
-# FIRESTORE SAVE
-def save_chat(user_id: str, user_text: str, ai_reply: str):
-    db.collection("chats").add({
-        "userId": user_id,
-        "userText": user_text,
-        "aiReply": ai_reply,
-        "timestamp": firestore.SERVER_TIMESTAMP
-    })
-#INTENT DETECTION
+
+
 def detect_intent(text: str) -> str:
     text = text.lower()
-    if "weather" in text or "temperature" in text:
+    if "weather" in text:
         return "weather"
-    if "news" in text or "headlines" in text:
+    if "news" in text:
         return "news"
-    if any(k in text for k in ["what", "who", "explain", "why", "how", "tell me"]):
-        return "faq"
-    # simple chat detection
-    if len(text.split()) > 1:
-        return "chat"
-    return "unknown"
-# OLLAMA
-def ollama_reply(prompt: str) -> str:
-    return "AI response is temporarily unavailable on cloud deployment."
+    return "other"
 
-#WEATHER
+
 def handle_weather(text: str) -> str:
     city = "Pune"
-    match = re.search(r"(in|of)\s([a-zA-Z\s]+)", text)
-    if match:
-        city = match.group(2).strip()
-    url = (
-        "https://api.openweathermap.org/data/2.5/weather"
-        f"?q={city}&appid={OPEN_WEATHER_API_KEY}&units=metric"
-    )
-    try:
-        response = requests.get(url, timeout=10)
-        data = response.json()
-        if response.status_code != 200:
-            return f"Sorry, I could not fetch weather information for {city}."
-        temp = data["main"]["temp"]
-        desc = data["weather"][0]["description"]
-        now = datetime.datetime.now().strftime("%d %B %Y %I:%M %p")
-        return (
-            f"Today is {now}. "
-            f"The weather in {city} is {desc} "
-            f"with a temperature of {temp} degree Celsius."
-        )
-    except Exception:
-        return "Sorry, I could not fetch the weather information."
-#NEWS
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={OPEN_WEATHER_API_KEY}&units=metric"
+    response = requests.get(url)
+    data = response.json()
+    temp = data["main"]["temp"]
+    return f"Temperature in {city} is {temp}°C"
+
+
 def handle_news() -> str:
-    feed_url = "https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en"
-    feed = feedparser.parse(feed_url)
+    feed = feedparser.parse("https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en")
     if not feed.entries:
-        return "Sorry, I could not find any news right now."
-    headlines = []
-    for i, entry in enumerate(feed.entries[:5]):
-        headlines.append(f"Headline {i+1}: {entry.title}")
-    return "Here are the latest news headlines. " + " . ".join(headlines)
-#MAIN API
+        return "No news found"
+    return feed.entries[0].title
+
+
+@app.get("/")
+def home():
+    return {"message": "Server Running"}
+
+
 @app.post("/command", response_model=CommandResponse)
 def process_command(req: CommandRequest):
-    print("Received:", req.text)
-    text = req.text.lower()
-    user_id = req.userId or "guest"
-    intent = detect_intent(text)
+    intent = detect_intent(req.text)
+
     if intent == "weather":
-        reply = handle_weather(text)
+        reply = handle_weather(req.text)
     elif intent == "news":
         reply = handle_news()
     else:
-        reply = ollama_reply(text)  # faq/chat/unknown → Ollama
-    save_chat(user_id, req.text, reply)
+        reply = "Hello! I am working."
+
     return {"reply": reply}
