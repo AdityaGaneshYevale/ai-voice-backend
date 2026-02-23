@@ -106,15 +106,16 @@
 
 
 
-
 from fastapi import FastAPI
 from pydantic import BaseModel
+import os
 import requests
 import feedparser
 
-app = FastAPI()
+app = FastAPI(title="AI Voice Assistant Backend")
 
-OPEN_WEATHER_API_KEY = "c490ae765bd4f1bb67c96f114004f886"
+# ✅ API key environment मधून घेणार (secure)
+OPEN_WEATHER_API_KEY = os.getenv("OPEN_WEATHER_API_KEY", "demo_key")
 
 class CommandRequest(BaseModel):
     text: str
@@ -131,9 +132,13 @@ def home():
 
 @app.post("/command", response_model=CommandResponse)
 def process_command(req: CommandRequest):
-    if "weather" in req.text.lower():
-        return {"reply": "Weather feature working"}
-    elif "news" in req.text.lower():
-        return {"reply": "News feature working"}
+    text = req.text.lower()
+
+    if "weather" in text:
+        return {"reply": "Weather feature working ✅"}
+
+    elif "news" in text:
+        return {"reply": "News feature working ✅"}
+
     else:
-        return {"reply": "Hello Aditya! Backend is live."}
+        return {"reply": "Hello Aditya! Backend is live 🚀"}
