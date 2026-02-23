@@ -107,17 +107,14 @@
 
 
 
-
 from fastapi import FastAPI
 from pydantic import BaseModel
-import datetime
 import requests
-import re
 import feedparser
 
-OPEN_WEATHER_API_KEY = "c490ae765bd4f1bb67c96f114004f886"
+app = FastAPI()
 
-app = FastAPI(title="Voice Assistant Backend")
+OPEN_WEATHER_API_KEY = "c490ae765bd4f1bb67c96f114004f886"
 
 class CommandRequest(BaseModel):
     text: str
@@ -127,45 +124,16 @@ class CommandResponse(BaseModel):
     reply: str
 
 
-def detect_intent(text: str) -> str:
-    text = text.lower()
-    if "weather" in text:
-        return "weather"
-    if "news" in text:
-        return "news"
-    return "other"
-
-
-def handle_weather(text: str) -> str:
-    city = "Pune"
-    url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={OPEN_WEATHER_API_KEY}&units=metric"
-    response = requests.get(url)
-    data = response.json()
-    temp = data["main"]["temp"]
-    return f"Temperature in {city} is {temp}°C"
-
-
-def handle_news() -> str:
-    feed = feedparser.parse("https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en")
-    if not feed.entries:
-        return "No news found"
-    return feed.entries[0].title
-
-
 @app.get("/")
 def home():
-    return {"message": "Server Running"}
+    return {"message": "Server Running Successfully 🚀"}
 
 
 @app.post("/command", response_model=CommandResponse)
 def process_command(req: CommandRequest):
-    intent = detect_intent(req.text)
-
-    if intent == "weather":
-        reply = handle_weather(req.text)
-    elif intent == "news":
-        reply = handle_news()
+    if "weather" in req.text.lower():
+        return {"reply": "Weather feature working"}
+    elif "news" in req.text.lower():
+        return {"reply": "News feature working"}
     else:
-        reply = "Hello! I am working."
-
-    return {"reply": reply}
+        return {"reply": "Hello Aditya! Backend is live."}
