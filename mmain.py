@@ -166,6 +166,32 @@ def detect_intent(text: str) -> str:
     return "unknown"
 
 # 🔥 GROQ AI FUNCTION (Ollama Replacement)
+# def groq_reply(prompt: str) -> str:
+#     try:
+#         url = "https://api.groq.com/openai/v1/chat/completions"
+
+#         headers = {
+#             "Authorization": f"Bearer {os.environ['GROQ_API_KEY']}",
+#             "Content-Type": "application/json"
+#         }
+
+#         data = {
+#             "model": "llama3-8b-8192",
+#             "messages": [
+#                 {"role": "system", "content": "You are a helpful AI voice assistant."},
+#                 {"role": "user", "content": prompt}
+#             ]
+#         }
+
+#         response = requests.post(url, headers=headers, json=data, timeout=30)
+#         result = response.json()
+
+#         return result["choices"][0]["message"]["content"]
+
+#     except Exception as e:
+#         return f"Groq error: {e}"
+
+
 def groq_reply(prompt: str) -> str:
     try:
         url = "https://api.groq.com/openai/v1/chat/completions"
@@ -178,19 +204,22 @@ def groq_reply(prompt: str) -> str:
         data = {
             "model": "llama3-8b-8192",
             "messages": [
-                {"role": "system", "content": "You are a helpful AI voice assistant."},
                 {"role": "user", "content": prompt}
             ]
         }
 
         response = requests.post(url, headers=headers, json=data, timeout=30)
+
+        print(response.text)  # 🔥 ADD THIS
+
         result = response.json()
 
         return result["choices"][0]["message"]["content"]
 
     except Exception as e:
         return f"Groq error: {e}"
-
+    
+    
 # WEATHER
 def handle_weather(text: str) -> str:
     city = "Pune"
