@@ -202,7 +202,7 @@ def groq_reply(prompt: str) -> str:
         }
 
         data = {
-            "model": "llama3-8b-8192",  # safer model
+            "model": "llama-3.1-8b-instant",
             "messages": [
                 {"role": "system", "content": "You are a helpful AI voice assistant."},
                 {"role": "user", "content": prompt}
