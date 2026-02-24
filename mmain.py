@@ -197,27 +197,35 @@ def groq_reply(prompt: str) -> str:
         url = "https://api.groq.com/openai/v1/chat/completions"
 
         headers = {
-            "Authorization": f"Bearer {os.environ['GROQ_API_KEY']}",
+            "Authorization": f"Bearer {os.environ.get('GROQ_API_KEY')}",
             "Content-Type": "application/json"
         }
 
         data = {
-            "model": "llama3-8b-8192",
+            "model": "llama3-70b-8192",  # safer model
             "messages": [
+                {"role": "system", "content": "You are a helpful AI voice assistant."},
                 {"role": "user", "content": prompt}
             ]
         }
 
         response = requests.post(url, headers=headers, json=data, timeout=30)
 
-        print(response.text)  # 🔥 ADD THIS
+        print("STATUS:", response.status_code)
+        print("RAW RESPONSE:", response.text)
+
+        if response.status_code != 200:
+            return f"Groq API HTTP Error: {response.text}"
 
         result = response.json()
 
-        return result["choices"][0]["message"]["content"]
+        if "choices" in result:
+            return result["choices"][0]["message"]["content"]
+        else:
+            return f"Groq API Structure Error: {result}"
 
     except Exception as e:
-        return f"Groq error: {e}"
+        return f"Groq Exception: {e}"
     
     
 # WEATHER
